@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is the requester the session moderator?
+    function isModerator(sessionId) {
+      return get(/databases/$(database)/documents/sessions/$(sessionId)).data.moderatorId == request.auth.uid;
+    }
+
+    // Helper: is the requester an authenticated user (including anonymous)?
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    match /sessions/{sessionId} {
+      // Any authenticated user can read sessions
+      allow read: if isAuthed();
+
+      // Only the moderator can create a session (uid must match moderatorId field)
+      allow create: if isAuthed()
+        && request.resource.data.moderatorId == request.auth.uid;
+
+      // Only the moderator can update session-level fields
+      allow update: if isAuthed() && isModerator(sessionId);
+
+      // No deletes via client
+      allow delete: if false;
+
+      match /participants/{userId} {
+        // Any authed user can read all participants in a session
+        allow read: if isAuthed();
+
+        // A user can only write their own participant doc
+        allow create, update: if isAuthed() && request.auth.uid == userId;
+
+        allow delete: if false;
+      }
+
+      match /rounds/{roundId} {
+        // Any authed user can read rounds
+        allow read: if isAuthed();
+
+        // Only moderator can create or update rounds (reveal, end round)
+        allow create, update: if isAuthed() && isModerator(sessionId);
+
+        allow delete: if false;
+
+        match /votes/{userId} {
+          // Any participant in the session can read votes
+          allow read: if isAuthed();
+
+          // A user can only write/update their own vote
+          allow create, update: if isAuthed() && request.auth.uid == userId;
+
+          allow delete: if false;
+        }
+      }
+    }
+  }
+}
