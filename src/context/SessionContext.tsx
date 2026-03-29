@@ -73,8 +73,9 @@ export function SessionProvider({ sessionId, children }: Props) {
     return unsub
   }, [])
 
-  // Session listener
+  // Session listener — wait for auth before attaching (rules require isAuthed())
   useEffect(() => {
+    if (!userId) return
     const unsub = subscribeToSession(
       sessionId,
       (s) => {
@@ -87,13 +88,14 @@ export function SessionProvider({ sessionId, children }: Props) {
       },
     )
     return unsub
-  }, [sessionId])
+  }, [sessionId, userId])
 
   // Participants listener
   useEffect(() => {
+    if (!userId) return
     const unsub = subscribeToParticipants(sessionId, setParticipants, handleError)
     return unsub
-  }, [sessionId])
+  }, [sessionId, userId])
 
   // Round + votes listener — re-subscribes whenever currentRoundId changes
   useEffect(() => {

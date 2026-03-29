@@ -71,6 +71,7 @@ export default function HomeScreen() {
     setJoinLoading(true)
     setJoinError('')
     try {
+      const user = await ensureAnonymousUser()
       const session = await getSession(code)
       if (!session) {
         setJoinError('Session not found. Check the code and try again.')
@@ -80,7 +81,6 @@ export default function HomeScreen() {
         setJoinError('This session has been closed.')
         return
       }
-      const user = await ensureAnonymousUser()
       await joinSession(code, user.uid, displayNameJoin.trim(), false)
       navigate(`/session/${code}`)
     } catch (err) {

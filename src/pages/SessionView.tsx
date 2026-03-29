@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { SessionProvider, useSession } from '@/context/SessionContext'
 import { ensureAnonymousUser } from '@/lib/auth'
 import { joinSession } from '@/lib/firestore'
-import { auth } from '@/lib/firebase'
 import CardGrid from '@/components/CardGrid'
 import ParticipantList from '@/components/ParticipantList'
 import VoteStatus from '@/components/VoteStatus'
@@ -12,7 +11,24 @@ import RoundHistory from '@/components/RoundHistory'
 
 export default function SessionView() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const [authReady, setAuthReady] = useState(false)
+
+  // Ensure anonymous auth is established before mounting SessionProvider
+  // so Firestore listeners don't fire unauthenticated
+  useEffect(() => {
+    ensureAnonymousUser()
+      .then(() => setAuthReady(true))
+      .catch(() => setAuthReady(true)) // still render so error is visible
+  }, [])
+
   if (!sessionId) return null
+  if (!authReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Connecting…
+      </div>
+    )
+  }
 
   return (
     <SessionProvider sessionId={sessionId}>
@@ -92,16 +108,6 @@ function SessionViewInner({ sessionId }: { sessionId: string }) {
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
-  // Auth state for logout/sign-in edge cases
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        await ensureAnonymousUser()
-      }
-    })
-    return unsub
-  }, [])
 
   if (loading) {
     return (
