@@ -20,6 +20,24 @@ const FIBONACCI_VALUE_MAP: Record<string, number | null> = {
   '?': null,
 }
 
+const PAPARAZZI_OPTIONS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '🚀']
+const PAPARAZZI_VALUE_MAP: Record<string, number | null> = {
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  '10': 10,
+  '🚀': null,
+}
+
+type CardPreset = 'fibonacci' | 'paparazzi' | 'custom'
+
 export default function HomeScreen() {
   const navigate = useNavigate()
 
@@ -31,6 +49,7 @@ export default function HomeScreen() {
     FIBONACCI_VALUE_MAP,
   )
   const [showCustomEditor, setShowCustomEditor] = useState(false)
+  const [cardPreset, setCardPreset] = useState<CardPreset>('fibonacci')
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -92,12 +111,21 @@ export default function HomeScreen() {
   }
 
   function handleUseCustom() {
+    setCardPreset('custom')
     setShowCustomEditor(true)
   }
 
   function handleUseFibonacci() {
     setCardOptions(FIBONACCI_OPTIONS)
     setCardValueMap(FIBONACCI_VALUE_MAP)
+    setCardPreset('fibonacci')
+    setShowCustomEditor(false)
+  }
+
+  function handleUsePaparazzi() {
+    setCardOptions(PAPARAZZI_OPTIONS)
+    setCardValueMap(PAPARAZZI_VALUE_MAP)
+    setCardPreset('paparazzi')
     setShowCustomEditor(false)
   }
 
@@ -108,7 +136,7 @@ export default function HomeScreen() {
         <div className="md:col-span-2 text-center">
           <h1 className="text-4xl font-bold text-gray-900">Planning Poker</h1>
           <p className="mt-2 text-gray-500">
-            Estimate together, ship with confidence.
+            Cookies make a person strong.
           </p>
         </div>
 
@@ -152,7 +180,7 @@ export default function HomeScreen() {
                   type="button"
                   onClick={handleUseFibonacci}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    !showCustomEditor
+                    cardPreset === 'fibonacci'
                       ? 'bg-indigo-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -161,9 +189,20 @@ export default function HomeScreen() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleUsePaparazzi}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    cardPreset === 'paparazzi'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  pAPARazzi
+                </button>
+                <button
+                  type="button"
                   onClick={handleUseCustom}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    showCustomEditor
+                    cardPreset === 'custom'
                       ? 'bg-indigo-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -171,9 +210,14 @@ export default function HomeScreen() {
                   Custom
                 </button>
               </div>
-              {!showCustomEditor && (
+              {cardPreset === 'fibonacci' && (
                 <p className="text-xs text-gray-400">
                   {FIBONACCI_OPTIONS.join(', ')}
+                </p>
+              )}
+              {cardPreset === 'paparazzi' && (
+                <p className="text-xs text-gray-400">
+                  {PAPARAZZI_OPTIONS.join(', ')}
                 </p>
               )}
               {showCustomEditor && (
