@@ -34,7 +34,8 @@ service cloud.firestore {
         // A user can only write their own participant doc
         allow create, update: if isAuthed() && request.auth.uid == userId;
 
-        allow delete: if false;
+        // Moderator can remove (kick) any participant
+        allow delete: if isAuthed() && isModerator(sessionId);
       }
 
       match /rounds/{roundId} {

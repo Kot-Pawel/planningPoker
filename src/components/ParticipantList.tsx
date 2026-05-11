@@ -1,9 +1,15 @@
 import { useSession } from '@/context/SessionContext'
+import { kickParticipant } from '@/lib/firestore'
 
 export default function ParticipantList() {
-  const { participants, votes, currentRound, userId, session } = useSession()
+  const { participants, votes, currentRound, userId, session, isModerator } = useSession()
 
   const votedUserIds = new Set(votes.filter((v) => v.value !== null).map((v) => v.userId))
+
+  async function handleKick(targetUserId: string) {
+    if (!session) return
+    await kickParticipant(session.sessionId, targetUserId)
+  }
 
   return (
     <div>
@@ -43,7 +49,7 @@ export default function ParticipantList() {
                 )}
               </div>
 
-              <div className="flex-shrink-0 ml-2">
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                 {isRevealed ? (
                   <span className="text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded px-2 py-0.5">
                     {vote?.value ?? '–'}
@@ -52,6 +58,15 @@ export default function ParticipantList() {
                   <span className="text-green-600 text-base" title="Voted">✓</span>
                 ) : (
                   <span className="text-gray-300 text-base" title="Waiting">○</span>
+                )}
+                {isModerator && !isYou && !isMod && (
+                  <button
+                    onClick={() => handleKick(p.userId)}
+                    title={`Kick ${p.name}`}
+                    className="text-gray-300 hover:text-red-500 transition-colors text-sm leading-none"
+                  >
+                    ✕
+                  </button>
                 )}
               </div>
             </li>

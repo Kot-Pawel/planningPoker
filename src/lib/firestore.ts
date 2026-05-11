@@ -5,6 +5,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   writeBatch,
   serverTimestamp,
   Timestamp,
@@ -132,6 +133,10 @@ export async function joinSession(
   })
 
   return finalName
+}
+
+export async function kickParticipant(sessionId: string, userId: string): Promise<void> {
+  await deleteDoc(participantDoc(sessionId, userId))
 }
 
 // ---------------------------------------------------------------------------

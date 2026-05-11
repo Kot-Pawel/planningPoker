@@ -53,6 +53,8 @@ function SessionViewInner({ sessionId }: { sessionId: string }) {
   // Track whether we've received the first participants snapshot to avoid a
   // false-positive flash before Firestore delivers participant data.
   const participantsLoadedRef = useRef(false)
+  // Track whether this user was ever confirmed as a participant (to detect kicks).
+  const wasParticipantRef = useRef(false)
 
   // Check if current user is already a participant; if not, prompt for name
   useEffect(() => {
@@ -76,6 +78,19 @@ function SessionViewInner({ sessionId }: { sessionId: string }) {
       setNeedsName(false)
     }
   }, [participants, userId])
+
+  // Detect when the current user has been kicked (was a participant, now isn't)
+  useEffect(() => {
+    if (!userId) return
+    const isParticipant = participants.some((p) => p.userId === userId)
+    if (isParticipant) {
+      wasParticipantRef.current = true
+      return
+    }
+    if (wasParticipantRef.current) {
+      navigate('/?error=kicked')
+    }
+  }, [participants, userId, navigate])
 
   // Redirect when session not found or closed
   useEffect(() => {
