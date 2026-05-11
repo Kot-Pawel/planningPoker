@@ -10,9 +10,23 @@ const UNANIMOUS_MESSAGES = [
   "That's what she said. Wait, no — that's what EVERYONE said.",
 ]
 
+const TALK_MESSAGES = [
+  'We need to talk. 👀',
+  'Interesting... care to explain yourselves?',
+  'The estimates have entered the chat. So has chaos.',
+  'Well, someone is wrong. Politely discuss who.',
+  'Plot twist: you were all thinking of different stories.',
+  'This meeting could have been a longer meeting.',
+]
+
+interface Flash {
+  msg: string
+  variant: 'unanimous' | 'talk'
+}
+
 export default function ResultsDisplay() {
   const { currentRound, votes, session, participants } = useSession()
-  const [unanimousMsg, setUnanimousMsg] = useState<string | null>(null)
+  const [flash, setFlash] = useState<Flash | null>(null)
   const shownForRoundRef = useRef<string | null>(null)
 
   const { average, median, distribution, numericVotes, excludedCards } = computeStats(
@@ -21,7 +35,7 @@ export default function ResultsDisplay() {
   )
 
   useEffect(() => {
-    if (!currentRound?.revealed) return
+    if (!currentRound?.revealed || !session) return
     if (shownForRoundRef.current === currentRound.roundId) return
 
     const actualVotes = votes.filter((v) => v.value !== null)
@@ -31,11 +45,30 @@ export default function ResultsDisplay() {
     if (allVoted && uniqueValues.size === 1) {
       shownForRoundRef.current = currentRound.roundId
       const msg = UNANIMOUS_MESSAGES[Math.floor(Math.random() * UNANIMOUS_MESSAGES.length)]
-      setUnanimousMsg(msg)
-      const timer = setTimeout(() => setUnanimousMsg(null), 3000)
+      setFlash({ msg, variant: 'unanimous' })
+      const timer = setTimeout(() => setFlash(null), 5000)
       return () => clearTimeout(timer)
     }
-  }, [currentRound?.revealed, currentRound?.roundId, votes, participants])
+
+    // Detect spread > 2 card positions among numeric votes
+    const numericActual = actualVotes.filter(
+      (v) => v.value !== null && session.cardValueMap[v.value!] !== null,
+    )
+    const positions = numericActual
+      .map((v) => session.cardOptions.indexOf(v.value!))
+      .filter((i) => i !== -1)
+
+    if (positions.length >= 2) {
+      const spread = Math.max(...positions) - Math.min(...positions)
+      if (spread > 2) {
+        shownForRoundRef.current = currentRound.roundId
+        const msg = TALK_MESSAGES[Math.floor(Math.random() * TALK_MESSAGES.length)]
+        setFlash({ msg, variant: 'talk' })
+        const timer = setTimeout(() => setFlash(null), 5000)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [currentRound?.revealed, currentRound?.roundId, votes, participants, session])
 
   if (!currentRound?.revealed || !session) return null
 
@@ -53,10 +86,16 @@ export default function ResultsDisplay() {
     <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
       <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Results</h3>
 
-      {/* Unanimous banner */}
-      {unanimousMsg && (
-        <div className="animate-pulse text-center text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
-          {unanimousMsg}
+      {/* Flash banner: unanimous or needs-talk */}
+      {flash && (
+        <div
+          className={`animate-pulse text-center text-sm font-semibold rounded-lg px-4 py-2 ${
+            flash.variant === 'unanimous'
+              ? 'text-indigo-700 bg-indigo-50 border border-indigo-200'
+              : 'text-amber-700 bg-amber-50 border border-amber-200'
+          }`}
+        >
+          {flash.msg}
         </div>
       )}
 
