@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ensureAnonymousUser } from '@/lib/auth'
 import { createSession, joinSession, getSession } from '@/lib/firestore'
 import CardSetEditor from '@/components/CardSetEditor'
@@ -40,6 +40,8 @@ type CardPreset = 'fibonacci' | 'paparazzi' | 'custom'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const errorParam = searchParams.get('error')
 
   // Create form state
   const [createName, setCreateName] = useState('')
@@ -139,6 +141,17 @@ export default function HomeScreen() {
             Cookies make a person strong.
           </p>
         </div>
+
+        {errorParam === 'kicked' && (
+          <div className="md:col-span-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm text-center">
+            You were removed from the session by the moderator.
+          </div>
+        )}
+        {errorParam === 'not_found' && (
+          <div className="md:col-span-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm text-center">
+            Session not found.
+          </div>
+        )}
 
         {/* Create Session */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
