@@ -139,6 +139,10 @@ export async function kickParticipant(sessionId: string, userId: string): Promis
   await deleteDoc(participantDoc(sessionId, userId))
 }
 
+export async function updateAvatarSeed(sessionId: string, userId: string, seed: string): Promise<void> {
+  await updateDoc(participantDoc(sessionId, userId), { avatarSeed: seed })
+}
+
 // ---------------------------------------------------------------------------
 // Rounds
 // ---------------------------------------------------------------------------

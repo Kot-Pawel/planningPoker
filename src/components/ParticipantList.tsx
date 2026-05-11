@@ -1,5 +1,9 @@
+import Avatar from 'boring-avatars'
+import { v4 as uuidv4 } from 'uuid'
 import { useSession } from '@/context/SessionContext'
-import { kickParticipant } from '@/lib/firestore'
+import { kickParticipant, updateAvatarSeed } from '@/lib/firestore'
+
+const AVATAR_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#e0e7ff']
 
 export default function ParticipantList() {
   const { participants, votes, currentRound, userId, session, isModerator } = useSession()
@@ -9,6 +13,11 @@ export default function ParticipantList() {
   async function handleKick(targetUserId: string) {
     if (!session) return
     await kickParticipant(session.sessionId, targetUserId)
+  }
+
+  async function handleRegenerateAvatar() {
+    if (!session || !userId) return
+    await updateAvatarSeed(session.sessionId, userId, uuidv4())
   }
 
   return (
@@ -34,6 +43,12 @@ export default function ParticipantList() {
               }`}
             >
               <div className="flex items-center gap-2 min-w-0">
+                <Avatar
+                  size={28}
+                  name={p.avatarSeed ?? p.userId}
+                  variant="beam"
+                  colors={AVATAR_COLORS}
+                />
                 <span className="truncate text-sm font-medium text-gray-800">
                   {p.name}
                 </span>
@@ -58,6 +73,15 @@ export default function ParticipantList() {
                   <span className="text-green-600 text-base" title="Voted">✓</span>
                 ) : (
                   <span className="text-gray-300 text-base" title="Waiting">○</span>
+                )}
+                {isYou && (
+                  <button
+                    onClick={handleRegenerateAvatar}
+                    title="Regenerate avatar"
+                    className="text-gray-300 hover:text-indigo-500 transition-colors text-sm leading-none"
+                  >
+                    ↺
+                  </button>
                 )}
                 {isModerator && !isYou && !isMod && (
                   <button
