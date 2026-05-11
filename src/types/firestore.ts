@@ -21,6 +21,7 @@ export interface Participant {
   joinedAt: Timestamp
   lastSeen: Timestamp
   isModerator: boolean
+  avatarSeed?: string
 }
 
 export interface RoundStats {
