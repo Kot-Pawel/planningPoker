@@ -1,8 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [1.2]
 
 ### Added
+
+#### Moderator role transfer (anyone can claim)
+- Any authenticated participant can assign the moderator role to any other participant — including themselves — by clicking the `★` button next to a participant's name.
+- This enables both explicit hand-off (current mod promotes someone) and "stealing" (any participant claims the role).
+- The `★` button is shown on every participant row that is not already the moderator, including the current user's own row.
+- `moderatorId` on the session document is the single source of truth; `isModerator` in `SessionContext` re-evaluates reactively via the existing real-time session subscription.
+- Firestore security rule updated: any authenticated user may write to the session document when **only** `moderatorId` is being changed (`.affectedKeys().hasOnly(['moderatorId'])`). All other session fields remain moderator-only.
+
+**Files changed:** `firestore.rules`, `src/lib/firestore.ts`, `src/components/ParticipantList.tsx`
+
+---
 
 #### Kick participants (moderator only)
 - Moderator now sees a `✕` button next to every participant who is not themselves and not another moderator in the participant list.
@@ -35,6 +46,18 @@
 ---
 
 ### Tests
+
+- Added `src/test/moderatorTransfer.test.ts`:
+  - `transferModerator` calls `updateDoc` on the session document with `{ moderatorId: newModeratorId }`.
+  - `transferModerator` issues exactly one Firestore write (does not touch participant documents).
+  - `isModerator` derivation correctly transitions on transfer: old moderator loses the role, new moderator gains it.
+  - `isModerator` derivation supports self-claim (a non-mod steals the role).
+  - `isModerator` is `false` for a `null` session or unauthenticated user.
+- Added `src/test/moderatorRules.test.ts` — TypeScript policy model covering the Firestore update rule:
+  - Moderator can update any session field (state, cardOptions, moderatorId, multiple at once).
+  - Non-moderator can update **only** `moderatorId` (single-field change).
+  - Non-moderator is blocked from changing `cardOptions`, `state`, or a combination of `moderatorId` + any other field.
+  - Unauthenticated user is blocked from all updates.
 
 - Added `src/test/avatar.test.ts` covering avatar seed resolution logic:
   - Uses `avatarSeed` when present.
