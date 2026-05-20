@@ -139,6 +139,13 @@ export async function kickParticipant(sessionId: string, userId: string): Promis
   await deleteDoc(participantDoc(sessionId, userId))
 }
 
+export async function transferModerator(
+  sessionId: string,
+  newModeratorId: string,
+): Promise<void> {
+  await updateDoc(sessionDoc(sessionId), { moderatorId: newModeratorId })
+}
+
 export async function updateAvatarSeed(sessionId: string, userId: string, seed: string): Promise<void> {
   await updateDoc(participantDoc(sessionId, userId), { avatarSeed: seed })
 }

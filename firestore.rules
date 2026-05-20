@@ -21,8 +21,12 @@ service cloud.firestore {
       allow create: if isAuthed()
         && request.resource.data.moderatorId == request.auth.uid;
 
-      // Only the moderator can update session-level fields
-      allow update: if isAuthed() && isModerator(sessionId);
+      // The moderator can update any session-level fields.
+      // Any authenticated user can update ONLY the moderatorId field (role transfer / steal).
+      allow update: if isAuthed() && (
+        isModerator(sessionId)
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['moderatorId'])
+      );
 
       // No deletes via client
       allow delete: if false;
